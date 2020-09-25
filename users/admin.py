@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext, gettext_lazy as _
 from django.contrib.auth.admin import UserAdmin
-from .models import User
+from .models import User, PhoneNumber, PhoneNumberVerification
 
 
 @admin.register(User)
@@ -47,3 +47,11 @@ class UserModelAdmin(UserAdmin):
         "groups",
         "user_permissions",
     )
+
+@admin.register(PhoneNumber)
+class PhoneNumberAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(PhoneNumberVerification)
+class PhoneNumberVerificationAdmin(admin.ModelAdmin):
+    pass

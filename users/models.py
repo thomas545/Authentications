@@ -16,7 +16,9 @@ class User(AbstractUser):
     Username and password are required. Other fields are optional.
     """
 
-    phone = PhoneNumberField(verbose_name=_("phone Number"), blank=True)
+    phone = PhoneNumberField(
+        verbose_name=_("phone Number"), unique=True, blank=True, null=True
+    )
 
 
 class PhoneNumber(models.Model):

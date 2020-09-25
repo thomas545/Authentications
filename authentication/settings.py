@@ -13,6 +13,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -146,8 +147,10 @@ SIMPLE_JWT = {
 # DJ Rest Auth & Allauth Setiings
 REST_USE_JWT = True
 SITE_ID = 1
+
 UNIQUE_PHONE_NUMBER = True
 EXPIRED_RESET_CODE = 10
+PHONE_NUMBER_VERIFICATION = True
 
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_USERNAME_REQUIRED = False
@@ -157,14 +160,22 @@ ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = False
 SOCIALACCOUNT_EMAIL_REQUIRED = False
 
-
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
-
+    'users.auth_backends.AuthenticationBackends',
     # `allauth` specific authentication methods, such as login by e-mail
-    'allauth.account.auth_backends.AuthenticationBackend',
+    # 'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
+REST_AUTH_REGISTER_SERIALIZERS = {
+    "REGISTER_SERIALIZER": "users.serializers.UserRegisterSerializer"
+}
+
+REST_AUTH_SERIALIZERS = {
+    'LOGIN_SERIALIZER': 'users.serializers.UserLoginSerializer',
+}
+
 
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {
