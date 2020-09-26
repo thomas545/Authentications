@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext, gettext_lazy as _
 from django.contrib.auth.admin import UserAdmin
-from .models import User, PhoneNumber, PhoneNumberVerification
+from .models import User, PhoneNumber, PhoneNumberVerification, ResetPasswordCode
 
 
 @admin.register(User)
@@ -54,4 +54,9 @@ class PhoneNumberAdmin(admin.ModelAdmin):
 
 @admin.register(PhoneNumberVerification)
 class PhoneNumberVerificationAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ResetPasswordCode)
+class ResetPasswordCodeAdmin(admin.ModelAdmin):
     pass

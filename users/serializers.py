@@ -1,5 +1,8 @@
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from django.contrib.auth.forms import SetPasswordForm
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers, exceptions
 from phonenumber_field.serializerfields import PhoneNumberField
@@ -7,8 +10,9 @@ from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumber
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import LoginSerializer
 
+
 from .models import PhoneNumber, PhoneNumberVerification
-from .utils import generate_key, send_verification_sms
+from .utils import generate_key, send_verification_sms, send_reset_password_code
 User = get_user_model()
 
 
@@ -95,3 +99,65 @@ class UserLoginSerializer(LoginSerializer):
 
         attrs['user'] = user
         return attrs
+
+
+class UserPasswordResetSerializer(serializers.Serializer):
+    """
+    Serializer for requesting a password reset phone.
+    """
+    phone = PhoneNumberField(required=True)
+
+    def get_phone_options(self):
+        """Override this method to change default e-mail options"""
+        return {}
+
+    def validate_phone(self, phone):
+        if not PhoneNumber.objects.filter(phone=phone).exists():
+            raise exceptions.ValidationError(_("Phone number doesn't exist."))
+        return phone
+
+    def save(self):
+        phone = self.validated_data.get("phone", None)
+        if phone:
+            user = User.objects.get(phone=phone)
+            send_reset_password_code(user)
+
+
+class UserPasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    Serializer for confirming a password reset attempt.
+    """
+    new_password1 = serializers.CharField(max_length=128)
+    new_password2 = serializers.CharField(max_length=128)
+    code = serializers.IntegerField()
+
+    set_password_form_class = SetPasswordForm
+
+    def custom_validation(self, attrs):
+        reset_pass = ResetPasswordCode.objects.filter(code=attrs['code'])
+        if reset_pass and reset_pass.first().code_expired:
+            raise exceptions.ValidationError(_("Your Code Is Expired"), {'code': ['expired']})
+
+    def validate(self, attrs):
+        self._errors = {}
+
+        # Get User object with code
+        try:
+            code = attrs['code']
+            password_reset = ResetPasswordCode.objects.get(code=code)
+            self.user = password_reset.user
+        except Exception as exc:
+            raise exceptions.ValidationError(_("Invalid code"), {'code': ['Invalid code']})
+
+        self.custom_validation(attrs)
+        # Construct SetPasswordForm instance
+        self.set_password_form = self.set_password_form_class(
+            user=self.user, data=attrs
+        )
+        if not self.set_password_form.is_valid():
+            raise serializers.ValidationError(self.set_password_form.errors)
+
+        return attrs
+
+    def save(self):
+        return self.set_password_form.save()

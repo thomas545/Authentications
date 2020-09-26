@@ -51,24 +51,23 @@ class ResetPasswordCode(models.Model):
     user = user = models.ForeignKey(
         get_user_model(), related_name="reset_codes", on_delete=models.CASCADE
     )
-    code = models.IntegerField(
-        verbose_name=_("Reset Password Code"),
-        default=generate_code(),
-        unique=True,
-    )
+    code = models.IntegerField(verbose_name=_("Reset Password Code"), unique=True)
     sent = models.DateTimeField(verbose_name=_("Sent"), null=True)
     created = models.DateTimeField(verbose_name=_("Created"), default=timezone.now)
 
     @property
     def code_expired(self):
-        return timezone.now() > (
-            self.sent + timedelta(minutes=getattr(settings, "EXPIRED_RESET_CODE", 10))
-        )
+        try:
+            return timezone.now() > (
+                self.sent + timedelta(minutes=getattr(settings, "EXPIRED_RESET_CODE", 10))
+            )
+        except Exception:
+            return None
 
-    @classmethod
-    def code(cls):
-        if cls.sent and cls.expired:
-            cls.reset_password_code = generate_code()
-            cls.save()
-            return cls.reset_password_code
-        return cls.reset_password_code
+    # def save(self, *args, **kwargs):
+    #     if not self.code:
+    #         self.code = randint(1000000, 9999999)
+    #     if self.code and self.code_expired:
+    #         self.code = randint(1000000, 9999999)
+    #     super(ResetPasswordCode, self).save(*args, **kwargs)
+
